@@ -15,77 +15,91 @@ Case Study of Merging Area Objects}
 
 \author{
 \name{
+%Authors\thanks{CONTACT Authors. Email: }
 Dongliang Peng\thanks{CONTACT Dongliang Peng. Email: d.l.peng@tudelft.nl}, 
 Martijn Meijers and 
-Peter van Oosterom}
-\affil{GIS Technology, Faculty of Architecture and the Built Environment,
-Delft University of Technology, Delft, The Netherlands}
+Peter van Oosterom
+}
+\affil{
+GIS Technology, Faculty of Architecture and the Built Environment,
+Delft University of Technology, Delft, The Netherlands
+%Affiliations
+}
 }
 
 \maketitle
 
 \begin{abstract}
-Area objects are important features on maps.
-When users zoom out on digital maps, 
-some area objects become too tiny to be seen, resulting in visual clutters. 
-To avoid this problem, the map should be generalized.
-For example, the relatively unimportant areas need to be split or merged,
-and the boundaries need to be simplified.
-%We merge small and relatively unimportant areas 
-%into their neighbors to form larger ones. 
-We define an \emph{event} as a generalization operation, 
-which in our case is merging the least important area 
-into the most compatible neighbor.
-On our digital map, the event is animated, 
-where the neighbor gradually expands over the least important area.
+%Area objects are important features on maps.
+%When users zoom out on a digital map, 
+%some area objects become too tiny to be seen, resulting in visual clutters. 
+%To avoid this problem, the map should be generalized.
+%For example, the relatively unimportant areas need to be split or merged,
+%and the boundaries need to be simplified.
+%We define an \emph{event} as a generalization operation, 
+%which in our case is merging the least important area 
+%into the most compatible neighbor.
+%On our digital map, the event is animated, 
+%where the neighbor gradually expands over the least important area.
+%However, because of the given sequence 
+%in which the events are processed one by one, 
+%the animation duration is short.
+%As a result, the map users experience many small shock changes.
+%We try to produce map users with smoother experience 
+%by paralleling some events.
+%We define a \emph{step} as a set of events 
+%happening at the same interval of animation duration.
+%In our method, a step is completely processed 
+%before the next step takes place (all sequential).
+%Because the events in a step happen parallelly,
+%the animation duration of each event (and also the step) now is 
+%the duration sum of all the events happening sequentially. 
+%In this way, map users will experience 
+%smoother changes and fewer shock changes. 
+%Furthermore, we require that 
+%all the pairs of areas involved in the merging events of a step 
+%do not have any common neighbor, 
+%which makes the merging events independent from each other.
+%There are two benefits of this independency.
+%First, it is easy for us to maintain the map topology.
+%Second, users can more easily keep the context.
+%This paper shows the details of finding and processing parallel events.
+%Then, this paper compares between the scale transitions 
+%based on single merging and parallel merging.
+%Our original contribution is the proposal of the parallel generalization
+%maintaining map consistency over scale transition. 
+%why? how? what? so what?
+%%%%
+%%%% Alternative abstract
+When users zoom out on a digital map, 
+some area objects become too tiny to be seen, 
+resulting in visual clutters. 
+To avoid this problem, 
+we merge the relatively unimportant areas into their neighbors to form larger areas.
+We define an \emph{event} as merging an unimportant area into 
+its most compatible neighbor 
+(where the neighbor gradually expands over the unimportant area).
 However, because of the given sequence 
 in which the events are processed one by one, 
 the animation duration is short.
 As a result, the map users experience many small shock changes.
-We try to produce map users with smoother experience 
-by paralleling some events.
-We define a \emph{step} as a set of events 
-happening at the same interval of animation time.
-In our method, a step is completely processed 
+We try to produce smoother map transition by paralleling some events.
+We define a \emph{step} as a set of merging events happening 
+at the same animation duration.
+A step is completely processed 
 before the next step takes place (all sequential).
 Because the events in a step happen parallelly,
 the animation duration of each event (and also the step) now is 
 the duration sum of all the events happening sequentially. 
-In this way, map users will experience 
-more smooth changes and fewer shock changes. 
-Furthermore, we require that 
-all the pairs of areas involved in the merging events of a step 
-do not have any common neighbor, 
-which makes the merging events independent from each other.
-There are two benefits of this independency.
-First, it is easy for us to maintain the map topology.
-Second, users can more easily keep the context.
-This paper shows the details of finding and processing parallel events.
-Then, this paper compares between the scale transitions 
-based on single merging and parallel merging.
-Our original contribution is the proposal of the parallel generalization
-maintaining map consistency over scale transition. 
-%why? how? what? so what?
-%%%%
-%%%% Alternative abstract
-%When users zoom out on digital maps, 
-%some area objects become too tiny to be seen, 
-%resulting in visual clutters. 
-%To avoid this problem, 
-%we merge small areas into their neighbors to form larger areas.
-%We define an \emph{event} as merging a small area into a neighbor 
-%(where the neighbor gradually expands over the small area).
-%We define a \emph{step} as a set of merging events happening 
-%at the same interval of animation time.
-%A step is completely processed 
-%before the next step takes place (all sequential). 
+%In this way, map users will experience 
+%smoother changes and fewer shock changes.  
 %We produce smooth zooming based on finding parallel events for merging steps,
 %where an area participates in at most one event in a step.
-%This talk shows the details of finding and processing parallel events.
-%Then, this talk compares between the scale transitions of maps generated
-%based on single-event step and parallel-event step.
-%Our original contribution is the proposal of the parallel merging
-%maintaining map consistency over scale transitions. 
+This paper shows the details of finding and processing parallel events.
+%Then, we compare between the scale transitions of maps generated
+%based on single merging and parallel merging.
+Our original contribution is the proposal of the parallel merging
+maintaining map consistency over scale transitions. 
 \end{abstract}
 
 \begin{keywords}
@@ -95,7 +109,7 @@ Space-scale cube, Map generalization, Vario-scale maps, Continuous generalizatio
 
 \section{Introduction}
 
-When users are reading digital maps,
+When users are reading a digital map,
 they expect different levels of detail (LoDs) depending on the scale.
 For example, they may want to see individual buildings when zooming in
 and see built-up areas when zooming out.
@@ -152,8 +166,8 @@ For example, there are large and discrete changes when
 \fig\ref{fig:intro}a is replaced with \fig\ref{fig:intro}b.
 Before this replacing, \fig\ref{fig:intro}a remains
 (\eg~\fig\ref{fig:intro}p is the same as \fig\ref{fig:intro}a).\footnote{%
-Please try the map at
-\url{https://pengdlzn.github.io/webmaps/2020/05/merge/example-discrete-merging/}.}
+See the map at
+\url{https://congengis.github.io/webmaps/2020/05/merge/example-discrete-merging/}.}
 Because of the large and discrete changes,
 users may need a while to realize that 
 the pink area is merged into the light-blue area.
@@ -177,8 +191,8 @@ for the smooth zooming of \figs\ref{fig:intro}d--j.
 If slicing the SSC by a horizontal plane at~$z=250$,
 then we obtain \fig\ref{fig:intro}q, 
 which is a smooth merging going on.\footnote{%
-Please try the map at
-\url{https://pengdlzn.github.io/webmaps/2020/05/merge/example-single-merging/}.}
+See the map at
+\url{https://congengis.github.io/webmaps/2020/05/merge/example-single-merging/}.}
 This gradual strategy allows users 
 to better keep their context during zooming
 so that they do not need to re-orientate
@@ -338,8 +352,8 @@ As for the operations happening outside the focused region,
 they can be ignored because 
 they are not interesting to map users at the moment.
 In this paper, we focus on paralleling merging operations.\footnote{%
-Please try the map at
-\url{https://pengdlzn.github.io/webmaps/2020/05/merge/example-parallel-merging/}.}
+See the map at
+\url{https://congengis.github.io/webmaps/2020/05/merge/example-parallel-merging/}.}
 For example, in the focused area, there is only one merging operation 
 from \fig\ref{fig:intro}l to \fig\ref{fig:intro}m,
 whereas there are two merging operations  
@@ -348,7 +362,7 @@ a user will have about twice of the duration to perceive the changes of the form
 (see duration assignment in \sect\ref{sec:zooming_duration}).\footnote{%
 A comparison of the single merging (left) 
 and the parallel merging (right) is at
-\url{https://pengdlzn.github.io/webmaps/2020/05/merge/example-parallel-merging/comparer.html}, 
+\url{https://congengis.github.io/webmaps/2020/05/merge/example-parallel-merging/comparer.html}, 
 where the slider at the left-hand side can be 
 moved to adjust the canvases of the two maps.}
 
@@ -1288,7 +1302,7 @@ That is, parallel parameter~$r_\mathrm{parallel}=0.001, 0.01, \text{and~} 0.1$
 which are independent of the size of the map dataset.
 The three versions of map can be browsed online.\footnote{%
 All of our web maps can be found at
-\url{https://pengdlzn.github.io/webmaps/2020/05/merge/}.}
+\url{https://congengis.github.io/webmaps/2020/05/merge/}.}
 \fig\ref{fig:web_map} shows two examples of our web map when 
 parallel parameter~$r_\mathrm{parallel}=0.01$.
 
@@ -1445,7 +1459,7 @@ When zooming on our web maps with different parallel parameters,
 we observed that the impressions of the maps 
 based on single merging\footnote{%
 See the web map at
-\url{https://pengdlzn.github.io/webmaps/2020/05/merge/single-merging/}.} 
+\url{https://congengis.github.io/webmaps/2020/05/merge/single-merging/}.} 
 and based on parallel merging with parameter~$r_\mathrm{parallel}= 0.001$ 
 are almost the same.
 The reason is that the smooth merging happens too fast,
@@ -1457,7 +1471,7 @@ and parallel merging,
 we put two maps together (see \fig\ref{fig:comparison}),
 where the parallel parameter is~$0.1$.\footnote{%
 See the map of comparison at
-\url{https://pengdlzn.github.io/webmaps/2020/05/merge/0.1/comparer.html}.}  
+\url{https://congengis.github.io/webmaps/2020/05/merge/0.1/comparer.html}.}  
 
 
 \begin{figure}[tb]
