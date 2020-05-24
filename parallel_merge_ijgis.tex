@@ -8,10 +8,10 @@
 
 \begin{document}
 
-%\articletype{ARTICLE TEMPLATE}
+\articletype{Research article}
 
-\title{Paralleling Generalization Operations to Support Smooth Zooming:
-Case Study of Merging Area Objects}
+\title{Paralleling generalization operations to support smooth zooming:
+case study of merging area objects}
 
 \author{
 \name{
@@ -26,6 +26,12 @@ Authors\thanks{CONTACT Authors. Email: }
 Affiliations 
 }
 }
+
+%Dongliang Peng: 0000-0001-6848-3545
+%Martijn Meijers: 0000-0003-0923-5423
+%Peter van Oosterom: 0000-0003-3874-4737
+
+
 
 \maketitle
 
@@ -375,7 +381,7 @@ Finally, \sect\ref{sec:concluding_remarks} draws the conclusion
 and present our future work.
 
 
-\section{Related Work}
+\section{Related work}
 \label{sec:realted_work}
 
 
@@ -566,7 +572,7 @@ the animation duration of zooming from one state to another state.
 
 
 
-\subsection{A Greedy Algorithm}
+\subsection{A greedy algorithm}
 \label{sec:greedy_algo}
 
 In the greedy algorithm, 
@@ -707,7 +713,7 @@ as the edges already stores the sequences of points.
 \end{figure}
 
 
-\subsection{Integrating the parallel events into the tGAP Databse Tables}
+\subsection{Integrating the parallel events into the tGAP databse tables}
 \label{sec:integrate_tgap}
 
 \citet[\p159]{Meijers2011Thesis} designed three tables 
@@ -943,7 +949,7 @@ the current state of the map
 (see \sect\ref{sec:zooming_duration}).
 
 
-\subsection{Snapping to a Valid State}
+\subsection{Snapping to a valid state}
 \label{sec:snap}
 
 For a zooming action based on the SSC, 
@@ -1030,7 +1036,7 @@ the same value as event number~$E_\mathrm{t,snap}$.
 %\subsection{Line simplification (smoothly moving vertices for the SSC)}
 
 
-\subsection{Animation Duration of a Step}
+\subsection{Animation duration of a step}
 \label{sec:zooming_duration}
 
 When users are zooming from a scale to another scale,
@@ -1246,7 +1252,7 @@ areas will bubble up.
 %We define the time duration for processing the $n_\mathrm{snap}$ events as
 
 
-\section{Case Study}
+\section{Case study}
 \label{sec:case_study}
 
 We have stored the result of the tGAP 
@@ -1274,18 +1280,11 @@ The processed data and some code based on WebGL (Web Graphics Library)
 are submitted to GPU so that we can output the interactive map with smooth zooming
 by slicing the SSC.
 
-The dataset used in this case study 
-has been uploaded to a GitHub repository.\footnote{%
-The dataset can be downloaded at
-\url{https://github.com/congengis/data_for_parallel_merge}.}
-This dataset was derived from open-access dataset TOP10NL,
-which is a topographic map produced by Kadaster.\footnote{%
-Dataset TOP10NL can be downloaded at
-\url{https://www.pdok.nl/downloads/-/article/basisregistratie-topografie-brt-topnl},
-accessed: May 17, 2020.}
+
 %
-\figs\ref{fig:data} shows the map.\footnote{%
-The information about the class code and the rendering formula can be found at
+\figs\ref{fig:data} shows the topographical map of this case study.
+The class codes and the rendering formulas are provided by Geonovum.\footnote{%
+See the details at
 \url{http://register.geostandaarden.nl/visualisatie/top10nl/1.2.0/BRT_TOP10NL_1.2_beschrijving_visualisatie.xlsx},
 accessed: Jan 15, 2020.}
 %
@@ -1512,7 +1511,7 @@ Fortunately, we would not need to use such a big parallel parameter in reality.
 %to merge with many of its holes in a single step.
 
 
-\section{Concluding Remarks}
+\section{Concluding remarks}
 \label{sec:concluding_remarks}
 
 \subsection{Conclusion}
@@ -1543,7 +1542,7 @@ when zooming on a map based on parallel-event operations.
 
 
 
-\subsection{Future Work}
+\subsection{Future work}
 
 Many topics related to this research need to be investigated further.
 \fig\ref{fig:smooth_merging}a--e shows our solution of
@@ -1708,7 +1707,18 @@ We will conduct some usability tests based on the experience of
 
 
 
+\section*{Data and codes availability statement}
 
+The data and codes used in this case study 
+can be found at \emph{figshare} 
+(see \url{https://figshare.com/s/199e049e2a0f9c18d19a}).
+The data was derived from open-access dataset TOP10NL,
+which is a topographic map produced by Kadaster
+(see \url{https://www.pdok.nl/downloads/-/article/basisregistratie-topografie-brt-topnl}).
+%\footnote{%
+%Dataset TOP10NL can be downloaded at
+%\url{https://www.pdok.nl/downloads/-/article/basisregistratie-topografie-brt-topnl},
+%accessed: May 17, 2020.}
 
 
 
@@ -1747,7 +1757,7 @@ We will conduct some usability tests based on the experience of
 
 \appendix
 
-\section{Create the Table of Weights and the Table of Compatibility Values}
+\section{Create the table of weights and the table of compatibility values}
 \label{appx:create_tables}
 This appendix shows how to create the table of weights and 
 the table of compatibility values in PostgreSQL.
@@ -1779,7 +1789,7 @@ as the codes indeed imply a hierarchy.
 
 \bigskip
 
-\section{Communicate Valid States}
+\section{Communicate valid states}
 \label{appx:communicate_valid_states}
 
 \sect\ref{sec:snap} shows how to snap to only valid states 
@@ -1791,7 +1801,7 @@ we try to decrease the size of the sent data.
 
 
 
-\subsection{On the Server Side}
+\subsection{On the server side}
 \label{sec:communicate_server}
 
 On the server side, 
@@ -1955,7 +1965,7 @@ will be sent to the client side.
 
 
 
-\subsection{On the Client Side}
+\subsection{On the client side}
 \label{sec:communicate_client}
 
 
