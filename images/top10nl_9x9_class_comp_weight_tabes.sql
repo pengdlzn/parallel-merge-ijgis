@@ -50,6 +50,7 @@ CREATE OR REPLACE FUNCTION
       LOOP
         code_dis := 0;
         IF code_fr != code_to THEN
+          -- code_dis_test is the inner array of code_dis_test_arr
           FOREACH code_dis_test SLICE 1 IN ARRAY code_dis_test_arr      
           LOOP
             division_fr := code_fr / code_dis_test[1];
