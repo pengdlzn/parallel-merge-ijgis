@@ -36,6 +36,27 @@ Delft University of Technology, Delft, The Netherlands
 \maketitle
 
 \begin{abstract}
+When users zoom out on a digital map, 
+some area objects become too tiny to be seen, 
+resulting in visual clutters. 
+To avoid this problem, 
+we merge the relatively unimportant areas into their neighbors to form larger areas.
+However, if several areas are merged into an area in a single operation,
+then it is a large and discrete change, 
+which confuse map users.
+In order to provide small and smooth changes,
+this paper merges a pair of areas by expanding one over the other.
+However, if the changes happen sequentially,
+then the changes have to happen very fast 
+because the map user wants to see the map at the target scale 
+rather soon after applying a zooming operation.
+In order to allow each change has more time to take place, 
+we propose to parallel the merging operations.
+This paper shows the details of finding and processing parallel merging operations.
+We consider that parallel generalization operations
+is an important step towards continuous map generalization. 
+%%%%
+%%%% Old abstract
 %Area objects are important features on maps.
 %When users zoom out on a digital map, 
 %some area objects become too tiny to be seen, resulting in visual clutters. 
@@ -75,41 +96,41 @@ Delft University of Technology, Delft, The Netherlands
 %Our original contribution is the proposal of the parallel generalization
 %maintaining map consistency over scale transition. 
 %why? how? what? so what?
-%%%%
-%%%% Alternative abstract
-When users zoom out on a digital map, 
-some area objects become too tiny to be seen, 
-resulting in visual clutters. 
-To avoid this problem, 
-we merge the relatively unimportant areas into their neighbors to form larger areas.
-We define an \emph{event} as merging an unimportant area into 
-its most compatible neighbor 
-(where the neighbor gradually expands over the unimportant area).
-However, because of the given sequence 
-in which the events are processed one by one, 
-the animation duration is short.
-As a result, the map users experience many small shock changes.
-We try to produce smoother map transition by paralleling some events.
-We define a \emph{step} as a set of merging events happening 
-at the same animation duration.
-A step is completely processed 
-before the next step takes place (all sequential).
-Because the events in a step happen parallelly,
-the animation duration of each event (and also the step) now is 
-the duration sum of all the events happening sequentially. 
-%In this way, map users will experience 
-%smoother changes and fewer shock changes.  
-%We produce smooth zooming based on finding parallel events for merging steps,
-%where an area participates in at most one event in a step.
-This paper shows the details of finding and processing parallel events.
-%Then, we compare between the scale transitions of maps generated
-%based on single merging and parallel merging.
-Our original contribution is the proposal of the parallel merging
-maintaining map consistency over scale transitions. 
+%%%%%
+%%%%% Alternative abstract
+%When users zoom out on a digital map, 
+%some area objects become too tiny to be seen, 
+%resulting in visual clutters. 
+%To avoid this problem, 
+%we merge the relatively unimportant areas into their neighbors to form larger areas.
+%We define an \emph{event} as merging an unimportant area into 
+%its most compatible neighbor 
+%(where the neighbor gradually expands over the unimportant area).
+%However, because of the given sequence 
+%in which the events are processed one by one, 
+%the animation duration is short.
+%As a result, the map users experience many small shock changes.
+%We try to produce smoother map transition by paralleling some events.
+%We define a \emph{step} as a set of merging events happening 
+%at the same animation duration.
+%A step is completely processed 
+%before the next step takes place (all sequential).
+%Because the events in a step happen parallelly,
+%the animation duration of each event (and also the step) now is 
+%the duration sum of all the events happening sequentially. 
+%%In this way, map users will experience 
+%%smoother changes and fewer shock changes.  
+%%We produce smooth zooming based on finding parallel events for merging steps,
+%%where an area participates in at most one event in a step.
+%This paper shows the details of finding and processing parallel events.
+%%Then, we compare between the scale transitions of maps generated
+%%based on single merging and parallel merging.
+%Our original contribution is the proposal of the parallel merging
+%maintaining map consistency over scale transitions. 
 \end{abstract}
 
 \begin{keywords}
-Space-scale cube, map generalization, vario-scale map, continuous generalization
+Space-scale cube, map generalization, vario-scale map, continuous map generalization
 \end{keywords}
 
 
@@ -143,13 +164,17 @@ Algorithms of CMG have been proposed
 to morph raster maps
 \citep[\eg][]{Pantazis2009a,Pantazis2009b}, 
 to morph polylines
-\citep[\eg][]{Noellenburg2008,Peng2013LSA,Deng2015,Li2017Annealing},
+\citep[\eg][]{Noellenburg2008,Peng2013LSA,Deng2015,Li2017Annealing,Li2018Fourier},
 to generalize buildings
 \citep[\eg][]{Li2017_Building,Peng2017Building,Touya2017Progressive},
-to transform road networks
-\citep[\eg][]{Suba2016Road,Chimani2014Eat},
+to transform road networks or river networks
+\citep[\eg][]{Suba2016Road,Chimani2014Eat,Huang2017Matrix,Peng2012River},
 and to transit administrative boundaries
 \citep[\eg][]{Peng2016Admin}.
+
+
+
+
 %Indeed, there are already many algorithms 
 %for continuous map generalization.
 %To adapt them into a web environment still needs a lot of effort.
@@ -161,8 +186,15 @@ Area objects are important features on maps.
 When users zoom out,
 some area objects become too tiny to be seen,
 which result in visual clutter.
-The clutter can be avoided by merging 
+The clutter can be avoided by generalizing the 
+area objects.
+
+\textbf{area objects can be merged, aggregated, split, collapsed}
+
+
+ merging 
 those tiny and relatively unimportant areas with their neighbors.
+
 For example, \citet{haunert2008f} developed a method based on
 mixed-integer programming to merge area objects
 for a map at a certain scale.
@@ -171,112 +203,34 @@ some levels of map representations,
 large and discrete changes usually happen.
 This kind of changes may cause users to lose track of
 their interested area objects \citep{vanKreveld2001}.
-For example, there are large and discrete changes when
-\fig\ref{fig:intro}a is replaced with \fig\ref{fig:intro}b.
-Before this replacing, \fig\ref{fig:intro}a remains
-(\eg~\fig\ref{fig:intro}p is the same as \fig\ref{fig:intro}a).\footnote{%
-See the map at
-\url{https://congengis.github.io/webmaps/2020/05/merge/example-discrete-merging/}.}
-Because of the large and discrete changes,
-users may need a while to realize that 
-the pink area is merged into the light-blue area.
-This problem can be mitigated if latter smoothly expand over the former
-(see \fig\ref{fig:intro}q), where users can immediately understand 
-what happened to the pink area. 
 To provide scale transition of small changes, 
 \citet{vanOosterom2005} proposed 
 the topological Generalized Area Partitioning (tGAP) tree,
 where in each step the least important area is merged into
-its most compatible neighbor 
-(see \figs\ref{fig:intro}d--j).
+its most compatible neighbor.
 Further, \citet{vanOosterom2014Support} proposed smooth tGAP
 to gradually apply generalization operations 
 (such as merge, split, and simplify).
 Based on the smooth tGAP, a space-scale cube (SSC) is built so that 
 the scale transition of a map can be realized smoothly
 by slicing the SSC \citep[see][]{Meijers2020Web}.
-For example, \fig\ref{fig:ssc}a is the SSC 
-for the smooth zooming of \figs\ref{fig:intro}d--j.
-If slicing the SSC by a horizontal plane at~$z=250$,
-then we obtain \fig\ref{fig:intro}q, 
-which is a smooth merging going on.\footnote{%
-See the map at
-\url{https://congengis.github.io/webmaps/2020/05/merge/example-single-merging/}.}
 This gradual strategy allows users 
 to better keep their context during zooming
 so that they do not need to re-orientate
 \citep{Noellenburg2008}.
 
 
-\begin{figure}[tb]
-\centering
-\includegraphics[page=1,scale=0.99]{introduction}
-\caption{A comparison of different scale-transition strategies for zooming out.
-Each arrow inside the subfigures indicates that 
-an area will be merged into another one.
-The arrow in the right-hand side indicates the states of zooming out,
-which is related to the transition duration.
-%
-(a--c): All changes are processed in one go.
-(d--j): All changes are sequenced one by one rapidly.
-(k--o): Changes are grouped, resulting in more animation duration for every change.
-%where smooth and parallel changes going on can be found in figure~(r);
-%digital map with smooth and parallel generalization operations.
-%
-The ellipse shows an example place where large and discrete change happens.
-The dashed polygon shows the place where a user focuses;
-the user has about twice of the duration 
-to perceive the merging of the pink area, \ie~figures (k--l),
-comparing to figures (f--g).
-The numbers are ids of the faces.
-}
-\label{fig:intro}
-\end{figure}
 
 
-
-\begin{figure}
-\centering
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[page=4,width=0.95\linewidth]{methodology}
-\caption{The SSC of the single merging shown in \figs\ref{fig:intro}d--j.
-    If slicing the SSC with a horizontal plane at $z$-coordinates~$0$, 
-    $100$, $200$, $300$, $400$, $500$, and~$600$,
-    then we get \figs\ref{fig:intro}d--j.
-    If slicing it at $z$-coordinate~$250$,
-    then we get \fig\ref{fig:intro}q.}
-\end{subfigure}
-\hfill
-\begin{subfigure}[t]{0.48\textwidth}
-\centering
-\includegraphics[page=5,width=0.95\linewidth]{methodology}
-\caption{The SSC of the parallel merging shown in \figs\ref{fig:intro}k--o.    
-    If slicing the SSC with a horizontal plane at $z$-coordinates~$0$, 
-    $200$,  $400$, $500$, and~$600$,
-    then we get \figs\ref{fig:intro}k--o.
-    If slicing it at $z$-coordinate~$100$,
-    then we get \fig\ref{fig:intro}r.}
-\end{subfigure}
-\caption{
-The content of each of the SSCs is stored in an OBJ file,
-and each of the figures is generated by displaying the OBJ file
-in software ParaView.
-The $z$-coordinates are $100$ times of the state values in \fig\ref{fig:intro}.
-We did this multiplication so that the contents can be better observed;
-otherwise, the two SSCs will be very short when displayed in ParaView.
-The faces are displayed with opacity~$0.8$ so that we can see some faces behind.
-Smooth animations of zooming out are obtained by
-slicing the SSCs from bottom to top.
-Note that both SSCs have exactly same bottom and top content 
-(also with same $z$-coordinates). 
-In the left SSC, only one merging event is happening 
-at a specific state ($z$-dimension), 
-while in the right SSC multiple merging events may happen at the same state.
-}
-\label{fig:ssc}
-\end{figure}
-
+The main contribution of this paper is 
+to parallel generalization operators,
+which is the first time that the parallelization 
+is explicitly proposed.
+The parallel merging operations must be well distributed,
+which pushes the boundaries of tGAP and the SSC.
+Because of the parallelization, 
+we need to snap to the scales with completed generalization operations
+and need to discuss the animation time gained for each generalization operation.
 
 %
 %\begin{figure}
@@ -330,50 +284,7 @@ while in the right SSC multiple merging events may happen at the same state.
 %\end{figure}
 
 
-When users zoom on maps, 
-they do not want to wait for too long to see the map at the desired scale.
-On a real map, however, 
-many changes must be processed to arrive at the desired scale.
-If the changes are processed one by one 
-(\eg~\figs\ref{fig:intro}d--j),
-then the animation duration for each change has to be very short.
-Users may still lose their context because of the fast changes.
-For example, a user may get the impression of
-a shock change from \fig\ref{fig:intro}f to \fig\ref{fig:intro}h
-(without the intermediate state of \fig\ref{fig:intro}g)
-even when the three areas on the right-hand side of \fig\ref{fig:intro}f
-are merged smoothly.
-To provide users with more gradual impression, 
-we parallel the generalization operations.
-For example, we should split or merge the relatively unimportant areas,
-and we should simplify the boundaries of the areas.
-If we select some of the generalization operations
-and process them in parallel,
-then each operation has more time to take place 
-than the operations are processed one after another.
-Moreover, if the selected operations are
-fairly evenly distributed on the whole map, 
-then there may be only a limited number of operations 
-happening in users' focused region.
-We assume that it is easier for users to keep track of their interested areas
-when fewer operations take place longer on the focused region.
-As for the operations happening outside the focused region,
-they can be ignored because 
-they are not interesting to map users at the moment.
-In this paper, we focus on paralleling merging operations.\footnote{%
-See the map at
-\url{https://congengis.github.io/webmaps/2020/05/merge/example-parallel-merging/}.}
-For example, in the focused area, there is only one merging operation 
-from \fig\ref{fig:intro}l to \fig\ref{fig:intro}m,
-whereas there are two merging operations  
-from \fig\ref{fig:intro}f to \fig\ref{fig:intro}h;
-a user will have about twice of the duration to perceive the changes of the former
-(see duration assignment in \sect\ref{sec:zooming_duration}).\footnote{%
-A comparison of the single merging (left) 
-and the parallel merging (right) is at
-\url{https://congengis.github.io/webmaps/2020/05/merge/example-parallel-merging/comparer.html}, 
-where the slider at the left-hand side can be 
-moved to adjust the canvases of the two maps.}
+
 
 
 This paper is organized as follows.
@@ -384,9 +295,67 @@ Finally, \sect\ref{sec:concluding_remarks} draws the conclusion
 and present our future work.
 
 
+
+
 \section{Related work}
 \label{sec:realted_work}
 
+\subsection{Generalization of area objects (maybe)}
+
+
+
+
+\subsection{Aggregation of area objects}
+Many researches have been devoted to the aggregation of area objects.
+\citet{Su1997aggregation,Sester2005Optimization} 
+used morphological operators to
+aggregate area objects, 
+where they applied a dilation and an erosion.
+\citet{Regnauld2003Amalgamation} 
+amalgamated area objects
+by merging, bridging, flooding, or sampling. 
+\citet{Shen2019Aggregation} aggregated area objects
+based on the superpixel method of \citet{Achanta2012SLIC}.
+
+\citet{Ai2007Aggregation}
+
+
+\citet{Ware1995Areal}
+
+\citet{He2018Amalgamation}
+
+\citet{Regnauld2007Amalgamation}
+
+\subsection{Continuous generalization}
+
+
+
+
+\subsection{Semantic neighbor process}
+
+
+
+
+
+\subsection{Parallel computation}
+
+
+Many methods of CMG naturally parallel generalization operators.
+In morphing polylines, the points of the polylines are moved parallelly
+\citep[\eg][]{Noellenburg2008,Li2017Annealing}.
+\citet{Li2017_Building} parallelly generalized individual buildings.
+In those methods, the polylines and the buildings 
+were generalized parallelly 
+because they were handled independently.
+\citet{Peng2017Building,Touya2017Progressive}
+generalized building to built-up areas.
+However, there is no simple relationship 
+between their intermediate-scale maps and their source maps.
+Therefore, all the intermediate-scale maps of buildings have to be
+sent from the server to the clients,
+which is network intensive.
+
+\subsection{Other....to be moved....}
 
 \citet[\chap2]{Peng2019Thesis} tried to 
 find an optimal sequence to merge area objects 
@@ -408,6 +377,22 @@ In the chain of processing area objects,
 they integrated cleaning, dissolving, splitting, 
 aggregating, reclassifying, and simplifying. 
 
+\citet{Suba2016Road} continuously generalized a planar map of road network.
+In each step, they process the least important face.
+Taking into account the local condition of the face
+(\eg~no compatible neighbor at the same side of the road),
+they may take different decisions for the face: 
+put it back with a higher importance, collapse it, 
+or merge it into an adjacent face.
+%In addition to the map generalization, 
+%they also made statistics of the number of faces,
+%the area of faces, the number of road faces, the number of road edges,
+%and the number of operations (merge and split) 
+%when the map scale is decreasing.
+%These statistics can be good indications 
+%for (continuous) map generalization.
+While \citet{Suba2016Road} approached CMG with small sudden changes,
+\citet{vanOosterom2014Support} provided real smooth changes.
 \Citet{vanOosterom2014Support} 
 explained the concept of the space-scale cube (SSC).
 At the bottom of the SSC is a detailed topographic map,
@@ -447,39 +432,30 @@ Basically, the \emph{winner} area gradually expands over the \emph{loser} area.
 We will use the \emph{Eater} because it works for all kinds of polygons,
 while the other two methods have limitations for some special cases.
 For example, the two other methods do not work for some concave polygons.
-\citet{Huang2016Webmap} pointed out that
-the effort of implementing online maps 
-had been spent mainly on preparing data on the server side.
-They studied the communication of map data 
-between the server side and the client side.
-They proposed different strategies of assigning 
-the work of processing map data
-according to the machine abilities of the clients.
 
-\citet{Suba2016Road} continuously generalized a planar map of road network.
-In each step, they process the least important face.
-Taking into account the local condition of the face
-(\eg~no compatible neighbor at the same side of the road),
-they may take different decisions for the face: 
-put it back with a higher importance, collapse it, 
-or merge it into an adjacent face.
-In addition to the map generalization, 
-they also made statistics of the number of faces,
-the area of faces, the number of road faces, the number of road edges,
-and the number of operations (merge and split) 
-when the map scale is decreasing.
-These statistics can be good indications 
-for (continuous) map generalization.
-\citet{Huang2017Matrix} utilized a matrix to guide 
-both pruning rivers and removing vertices for a river network, 
-where the rows and the columns respectively represent
-the rivers and the vertices.
-According to the matrix, 
-they were able to decide which rivers and vertices 
-should remain for a given scale.
-To that purpose, they proposed a method 
-to compute how many rivers and vertices 
-should be kept according to that given scale.
+
+
+
+
+%\citet{Huang2016Webmap} pointed out that
+%the effort of implementing online maps 
+%had been spent mainly on preparing data on the server side.
+%They studied the communication of map data 
+%between the server side and the client side.
+%They proposed different strategies of assigning 
+%the work of processing map data
+%according to the machine abilities of the clients.
+
+%\citet{Huang2017Matrix} utilized a matrix to guide 
+%both pruning rivers and removing vertices for a river network, 
+%where the rows and the columns respectively represent
+%the rivers and the vertices.
+%According to the matrix, 
+%they were able to decide which rivers and vertices 
+%should remain for a given scale.
+%To that purpose, they proposed a method 
+%to compute how many rivers and vertices 
+%should be kept according to that given scale.
 
 
 
@@ -498,19 +474,29 @@ should be kept according to that given scale.
 In order to provide smooth merging
 so that map users can easily keep track of their interested areas,
 we merge by gradually expanding an area over another area
-(see \fig\ref{fig:intro}r).
+(see \fig\ref{fig:intro}q).
+Note that the merging is independent of users' interested areas;
+the merging operations happen outside the interested region 
+are also realized by expanding.
 This expansion can be realized 
-by slicing the space-scale cube (SSC) shown in
-\fig\ref{fig:ssc}b.
-%For example, \figs\ref{fig:smooth_merging}a,
-%\ref{fig:smooth_merging}b, and \ref{fig:smooth_merging}c
-%are respectively obtained from slicing the cube 
-%at the bottom, the middle, and the top.
+by slicing the space-scale cube (SSC) of
+\fig\ref{fig:ssc}a.
+For example,  \fig\ref{fig:intro}q is obtained by slicing
+\fig\ref{fig:ssc}a at~$z= 250$.
+Smooth animations of zooming out are obtained by
+slicing an SSC from bottom to top.
 The details of slicing an SSC are illustrated in \citet{Meijers2020Web}.
-The SSCs of \fig\ref{fig:ssc} was built 
+The SSCs of \fig\ref{fig:ssc} were built 
 based on the \emph{Eater} of \citet{Suba2014Merge}.
-\fig\ref{fig:intro}r shows our solution of
-gradually expanding an area over the other area.
+The content of an SSC is stored in an OBJ file,
+and the OBJ file can be visualized by software ParaView
+(see \fig\ref{fig:ssc}).
+In \fig\ref{fig:ssc}, the $z$-coordinates are $100$ times of
+the state values in \fig\ref{fig:intro}.
+We did this multiplication so that the contents can be better observed;
+otherwise, the two SSCs will be very short when displayed in ParaView.
+
+
 Our strategy of presenting the static boundary (\ie~the exterior one) 
 is that we store the polylines and 
 draw them with width, 
@@ -520,6 +506,48 @@ a pair of areas that are being merged
 so that it is easy for map users 
 to identify the pairs of areas in transition. 
 
+
+
+\begin{figure}[tb]
+\centering
+\includegraphics[page=1,scale=0.99]{introduction}
+\caption{A comparison of different scale-transition strategies.
+Each arrow inside the subfigures indicates a merging operation.
+The arrow in the right-hand side indicates the states of zooming out.
+%
+(a--c): All changes are processed in one go.
+(d--j): All changes are sequenced one by one rapidly.
+(k--o): Changes are grouped, resulting in more animation duration for every change.
+%where smooth and parallel changes going on can be found in figure~(r);
+%digital map with smooth and parallel generalization operations.
+%
+The numbers are the face IDs.
+}
+\label{fig:intro}
+\end{figure}
+
+
+
+\begin{figure}
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[page=4,width=0.95\linewidth]{methodology}
+\caption{The SSC of the single merging of \figs\ref{fig:intro}d--j.}
+\end{subfigure}
+\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[page=5,width=0.95\linewidth]{methodology}
+\caption{The SSC of the parallel merging of \figs\ref{fig:intro}k--o}
+\end{subfigure}
+\caption{
+In the left SSC, only one merging event is happening 
+at a specific state ($z$-dimension), 
+while in the right SSC multiple merging events may happen at the same state.
+}
+\label{fig:ssc}
+\end{figure}
 
 
 We define an \emph{event} as a single generalization operation, 
@@ -646,10 +674,7 @@ to represent the number of events that actually happened within the step.
     (a) From all the free areas,
 	the least important one is selected to merge into
 	its most compatible neighbor.
-    The arrow indicates the merging.
 	Then the surrounding areas are blocked (marked by the crosses).
-    Note that the area shares only a vertex with the least important area 
-    is not blocked.
 	(b) Next, the least important area from the remaining free areas
 	is selected to merge with the most compatible neighbor,
 	and the surrounding areas are also blocked.
@@ -672,6 +697,8 @@ we define an event of areas~$a_\mathrm{least}$ and~$a_\mathrm{nbr}$.
 Then, we increase the number of events, $n_\mathrm{event}$, by 1.
 We block the surrounding neighbors of~$a_\mathrm{least}$ and~$a_\mathrm{nbr}$
 (see \fig\ref{fig:blocked_polygons}a).
+Note that the area shares only a vertex 
+with the least important area is not blocked.
 If area~$a_\mathrm{nbr}$ is not free,
 then it must be blocked because of the previously found events.
 In this case, we block $a_\mathrm{least}$ for now
@@ -1061,6 +1088,10 @@ have introduced the zooming factor and the zooming duration.
 They allowed users to set the two parameters,
 which is also the case in this paper
 (see \fig\ref{fig:interaction_settings}).
+As no paper has recommended values for 
+the zooming factor or the zooming duration,
+we respectively set the default values to $1$ and $1\,$s, 
+which performed well according to our experience.
 This section formalizes the relationship of the animation duration,
 the zooming duration, the zooming factor, and the number of events.
 In a zooming duration, there can be many merging steps,
@@ -1081,7 +1112,7 @@ may have different animation durations.
 
 \begin{figure}[tb]
 \centering
-\includegraphics[page=6,scale=0.7]{methodology}
+\includegraphics[page=6,scale=0.6]{methodology}
 \caption{Our panel of settings. 
 Among others, one can set how much to zoom when scrolling the mouse wheel 
 and set the zooming duration.}
@@ -1331,7 +1362,7 @@ parallel parameter~$r_\mathrm{parallel}=0.01$.
 \centering
 \begin{subfigure}[t]{\textwidth}
 \centering
-\includegraphics[page=1]{case_study}
+\includegraphics[page=1,scale=0.6]{case_study}
 \caption{An overview map. The map is generated from the base map 
     by parallel merging with parameter~$r_\mathrm{parallel}= 0.01$.}
 \end{subfigure}
@@ -1340,7 +1371,7 @@ parallel parameter~$r_\mathrm{parallel}=0.01$.
 %
 \begin{subfigure}[t]{\textwidth}
 \centering
-\includegraphics[page=2]{case_study}
+\includegraphics[page=2,scale=0.6]{case_study}
 \caption{A part of the base map. The displayed place is marked 
     by the dashed rectangle in \fig\ref{fig:data}.}
 \end{subfigure}
@@ -1482,7 +1513,7 @@ See the map of comparison at
 
 \begin{figure}[tb]
 \centering
-\includegraphics[page=3]{case_study}
+\includegraphics[page=3,scale=0.6]{case_study}
 \caption{
     The map to the left of the slider is based on single merging,
     and the one to the right is based on parallel merging
@@ -1548,6 +1579,20 @@ when zooming on a map based on parallel-event operations.
 \subsection{Future work}
 
 Many topics related to this research need to be investigated further.
+The case study with $13{,}238$ area objects 
+demonstrated the efficiency of our map.
+For a topographic map with much more objects,
+we will need to make $3$-d tiles of the map data.
+Then, the client side will dynamically load and process the map data 
+for the place and the scale being viewed.
+The client also needs to remove the loaded data that is not used for a while 
+in order to release memory.
+With those functionalities, our prototype will be able to handle 
+a map with arbitrary number of area objects.
+Those functionalities are under development 
+and will be presented in another paper.
+
+
 \fig\ref{fig:smooth_merging}a--e shows our solution of
 gradually expanding an area over the other area.
 It may be even better if the color of the smaller area (pink)
@@ -1674,13 +1719,14 @@ Then, we have the opportunity to store all the updates along time in the tessera
 By ``slicing'' it, we will be able to output a map at any scale and any time point.
 
 
-This paper develops technique for smooth zooming based on parallel merging,
+This paper develops the technique for smooth zooming based on parallel merging,
 and we hope that it allows map users to follow the zooming more easily.
 A future work is to investigate 
 how much map users benefit from our technique.
 We will conduct some usability tests based on the experience of
 \citet[\sect6.7]{Suba2017Thesis} and \citet{Midtbo2007}.
-
+Another future work is to find optimal parallel parameters for 
+different kinds of datasets.
 
 
 
